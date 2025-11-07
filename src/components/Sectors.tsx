@@ -26,6 +26,7 @@ interface Sector {
   description: string;
   services: string[];
   icon: string;
+  image: string; // ✨ Ajout du champ image
   content_modal: ModalContent;
 }
 
@@ -54,6 +55,7 @@ const Sectors: React.FC = () => {
       // Debug: Afficher les données dans la console
       console.log('✅ Secteurs chargés:', parsedSectors);
       console.log('✅ Content modal du premier secteur:', parsedSectors[0]?.content_modal);
+      console.log('🖼️ Images des secteurs:', parsedSectors.map(s => ({ id: s.id, image: s.image })));
     }
   }, [sectorsRaw]);
 
@@ -63,20 +65,14 @@ const Sectors: React.FC = () => {
     return IconComponent || LucideIcons.Building2;
   };
 
-  // 🖼️ Images des secteurs
-  const sectorImages = [
-    'https://images.pexels.com/photos/262047/pexels-photo-262047.jpeg?auto=compress&cs=tinysrgb&w=1920',
-    'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1920',
-    'https://images.pexels.com/photos/356079/pexels-photo-356079.jpeg?auto=compress&cs=tinysrgb&w=1920',
-    'https://images.pexels.com/photos/259200/pexels-photo-259200.jpeg?auto=compress&cs=tinysrgb&w=1920',
-    'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=1920',
-    'https://images.pexels.com/photos/230544/pexels-photo-230544.jpeg?auto=compress&cs=tinysrgb&w=1920',
-  ];
+  // 🖼️ Images des secteurs - SUPPRIMÉ
+  // Maintenant on utilise sector.image de la base de données
 
   // 🚀 Fonction pour ouvrir la modale
   const openModal = (sector: Sector, index: number) => {
     console.log('🔍 Ouverture modale pour:', sector.title);
     console.log('📦 Content modal:', sector.content_modal);
+    console.log('🖼️ URL de l\'image:', sector.image);
     
     // Vérifier que content_modal existe
     if (!sector.content_modal || Object.keys(sector.content_modal).length === 0) {
@@ -168,9 +164,13 @@ const Sectors: React.FC = () => {
                 {/* Background Image */}
                 <div className="relative h-48 overflow-hidden">
                   <img
-                    src={sectorImages[index]}
+                    src={sector.image || 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1920'}
                     alt={sector.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    onError={(e) => {
+                      // Fallback si l'image ne charge pas
+                      e.currentTarget.src = 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1920';
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
@@ -257,12 +257,21 @@ const Sectors: React.FC = () => {
       {isModalOpen && selectedSector && selectedSector.content_modal && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* 🖼️ Image de couverture fixe */}
-          <div
-            className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-            style={{
-              backgroundImage: `url(${sectorImages[selectedSectorIndex]})`,
-            }}
-          />
+          <div className="fixed inset-0">
+            <img
+              src={selectedSector.image || 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1920'}
+              alt={selectedSector.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                console.error('❌ Erreur de chargement de l\'image:', selectedSector.image);
+                // Fallback vers une image par défaut
+                e.currentTarget.src = 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1920';
+              }}
+              onLoad={() => {
+                console.log('✅ Image chargée avec succès:', selectedSector.image);
+              }}
+            />
+          </div>
 
           {/* Overlay transparent avec gradient */}
           <div className="fixed inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/90" />
